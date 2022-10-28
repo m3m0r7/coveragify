@@ -2,5 +2,19 @@
   "name": "m3m0r7/coveragify",
   "type": "library",
   "version": "0.0.1",
-  "license": "MIT"
+  "license": "MIT",
+  "autoload": {
+    "psr-4": {
+      "Coveragify\\": "src/"
+    },
+    "autoload-dev": {
+      "psr-4": {
+        "Tests\\": "tests/"
+      }
+    }
+  },
+  "require": {
+    "phpunit/phpunit": "^9.5",
+    "nikic/php-parser": "^4.15"
+  }
 }
