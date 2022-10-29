@@ -64,10 +64,9 @@ class Metrics
             }
         }
 
-        natsort($coverages);
-        static::$aggregated[$metrics->getFile()] = $coverages;
 
-        var_dump(static::$aggregated);
+        ksort($coverages);
+        static::$aggregated[$metrics->getFile()] = $coverages;
     }
 
     public static function getAggregations(): array
