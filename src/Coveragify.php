@@ -95,7 +95,7 @@ class Coveragify
                         '{{nodeType}}' => get_class($stmt) . "::class",
                     ]);
                     $coverageCollectorCode ??= is_array($this->coverageCollectorCode) ? $coverageCollectorCode : [$coverageCollectorCode];
-                    
+
                     $steps++;
                     $stmts = [...$stmts, $this->process($stmt, $steps), ...$coverageCollectorCode];
                 }

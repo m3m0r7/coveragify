@@ -9,6 +9,8 @@ use PhpParser\PrettyPrinter\Standard;
 
 class Metrics
 {
+    public const TYPE_AS_XML = 1;
+
     protected array $covered = [];
 
     public static function create(string $file, string $target, int $maxSteps): static
@@ -28,5 +30,25 @@ class Metrics
     public function getCovered(): array
     {
         return $this->covered;
+    }
+
+    public static function aggregate(Metrics $metrics): void
+    {
+
+    }
+
+    /**
+     * @param resource $handle
+     */
+    public static function reportTo($handle, int $type): void
+    {
+
+    }
+
+    public static function reportToFile(string $path, int $type): void
+    {
+        $handle = fopen($path, 'w+');
+        static::reportTo($handle, $type);
+        fclose($handle);
     }
 }
