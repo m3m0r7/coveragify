@@ -18,5 +18,8 @@
     "nikic/php-parser": "^4",
     "nesbot/carbon": "^2.62",
     "phpunit/phpunit": "^9.5"
-  }
+  },
+  "bin": [
+    "bin/coveragify"
+  ]
 }

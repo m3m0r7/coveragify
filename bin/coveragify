@@ -1,0 +1,36 @@
+#!/usr/bin/env php
+<?php
+
+require_once 'vendor/autoload.php';
+$relativePath = 'vendor/phpunit/phpunit/src/TextUI/TestRunner.php';
+
+$param = $argv[1] ?? null;
+
+if ($param === 'patch') {
+    file_put_contents(
+        $relativePath,
+        str_replace(
+            'use SebastianBergmann\\CodeCoverage\\Driver\\Selector',
+            'use Coveragify\\PHPUnit\\Selector',
+            file_get_contents($relativePath)
+        ),
+    );
+
+    echo "Successfully patch\n";
+    exit(0);
+} elseif ($param === 'unpatch') {
+    file_put_contents(
+        $relativePath,
+        str_replace(
+            'use Coveragify\\PHPUnit\\Selector',
+            'use SebastianBergmann\\CodeCoverage\\Driver\\Selector',
+            file_get_contents($relativePath)
+        ),
+    );
+
+    echo "Successfully unpatch\n";
+    exit(0);
+}
+
+echo "Unknown specified argument\n";
+exit(1);
