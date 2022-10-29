@@ -12,22 +12,22 @@ class Metrics
     protected array $covered = [];
     protected static array $aggregated = [];
 
-    public static function create(string $file, string $target, int $maxSteps): static
+    public static function create(string $file, string $target, array $coverageTargets): static
     {
-        return new static($file, $target, $maxSteps);
+        return new static($file, $target, $coverageTargets);
     }
 
-    public function __construct(protected string $file, protected string $target, protected int $maxSteps)
+    public function __construct(protected string $file, protected string $target, protected array $coverageTargets)
     {
     }
 
-    public function cover(int $line, int $complexity, ?string $nodeType): void
+    public function enter(int $line): void
     {
         $encountered = 0;
         if (isset($this->covered[$line])) {
             $encountered = $this->covered[$line]['encountered'] + 1;
         }
-        $this->covered[$line] = ['complexity' => $complexity, 'encountered' => $encountered, 'nodeType' => $nodeType];
+        $this->covered[$line] = ['encountered' => $encountered];
     }
 
     public function getCovered(): array
@@ -45,9 +45,9 @@ class Metrics
         return $this->file;
     }
 
-    public function getMaxSteps(): int
+    public function getCoveredTargets(): array
     {
-        return $this->maxSteps;
+        return $this->coverageTargets;
     }
 
     public static function aggregate(Metrics $metrics): void
