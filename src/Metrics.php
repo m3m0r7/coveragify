@@ -3,15 +3,14 @@ declare(strict_types=1);
 
 namespace Coveragify;
 
-use PhpParser\Node;
-use PhpParser\ParserFactory;
-use PhpParser\PrettyPrinter\Standard;
+use Carbon\Carbon;
 
 class Metrics
 {
     public const TYPE_AS_XML = 1;
 
     protected array $covered = [];
+    protected static array $aggregated = [];
 
     public static function create(string $file, string $target, int $maxSteps): static
     {
@@ -22,9 +21,13 @@ class Metrics
     {
     }
 
-    public function cover(int $line, ?string $nodeType): void
+    public function cover(int $line, int $complexity, ?string $nodeType): void
     {
-        $this->covered[$line] = $nodeType;
+        $encountered = 0;
+        if (isset($this->covered[$line])) {
+            $encountered = $this->covered[$line]['encountered'] + 1;
+        }
+        $this->covered[$line] = ['complexity' => $complexity, 'encountered' => $encountered, 'nodeType' => $nodeType];
     }
 
     public function getCovered(): array
@@ -32,23 +35,23 @@ class Metrics
         return $this->covered;
     }
 
+    public function getTarget(): string
+    {
+        return $this->target;
+    }
+
+    public function getFile(): string
+    {
+        return $this->file;
+    }
+
+    public function getMaxSteps(): int
+    {
+        return $this->maxSteps;
+    }
+
     public static function aggregate(Metrics $metrics): void
     {
-
-    }
-
-    /**
-     * @param resource $handle
-     */
-    public static function reportTo($handle, int $type): void
-    {
-
-    }
-
-    public static function reportToFile(string $path, int $type): void
-    {
-        $handle = fopen($path, 'w+');
-        static::reportTo($handle, $type);
-        fclose($handle);
+        var_dump($metrics->getCovered());
     }
 }

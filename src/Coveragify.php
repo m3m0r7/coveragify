@@ -11,12 +11,12 @@ class Coveragify
 {
     const COVERAGE_COLLECTOR_CODE = <<< CODE
     <?php
-    \$__coverage_{{identifier}}->cover(__LINE__, {{nodeType}});
+    \$__coverage_{{identifier}}->cover({{line}});
     CODE;
 
     const COVERAGE_STEP_DEFINITION_CODE = <<< CODE
     <?php
-    \$__coverage_{{identifier}} = \Coveragify\Metrics::create(__FILE__, __METHOD__ ?? __FUNCTION__, {{max_steps}});
+    \$__coverage_{{identifier}} = \Coveragify\Metrics::create(__FILE__, __METHOD__ ?? __FUNCTION__, {{max_steps}}, {{coverTargets}});
     CODE;
 
     const COVERAGE_POST_METRICS_CODE = <<< CODE
@@ -58,9 +58,17 @@ class Coveragify
         $this->coveragePostMetricsCode = $this->parse(static::COVERAGE_POST_METRICS_CODE);
     }
 
+    public function injectIncluding(): void
+    {
 
+    }
 
-    protected function process(Node|array|null $node, int &$steps = 0): Node|array|null
+    public function ejectIncluding(): void
+    {
+
+    }
+
+    protected function process(Node|array|null $node, int $complexity = 0, int &$steps = 0, array &$coverTargets = []): Node|array|null
     {
         if ($node === null) {
             return null;
@@ -92,17 +100,20 @@ class Coveragify
                 $stmts = [];
                 foreach ($node->stmts as $index => $stmt) {
                     $coverageCollectorCode = $this->parse(static::COVERAGE_COLLECTOR_CODE, [
-                        '{{nodeType}}' => get_class($stmt) . "::class",
+                        '{{line}}' => $stmt->getStartLine(),
                     ]);
+                    $coverTargets[] = [$stmt->getStartLine(), get_class($stmt), $complexity];
+
                     $coverageCollectorCode ??= is_array($this->coverageCollectorCode) ? $coverageCollectorCode : [$coverageCollectorCode];
 
                     $steps++;
-                    $stmts = [...$stmts, $this->process($stmt, $steps), ...$coverageCollectorCode];
+                    $stmts = [...$stmts, $this->process($stmt, $complexity + 1, $steps, $coverTargets), ...$coverageCollectorCode];
                 }
 
                 if ($nodeTypeClass === Node\Stmt\ClassMethod::class || $nodeTypeClass === Node\Stmt\Function_::class) {
                     $coverageStepDefinitionCode = $this->parse(static::COVERAGE_STEP_DEFINITION_CODE, [
                         '{{max_steps}}' => $steps,
+                        '{{coverTargets}}' => 'json_decode(\'' . json_encode($coverTargets) . '\', true)',
                     ]);
 
                     $stmts = [

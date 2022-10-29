@@ -15,6 +15,7 @@
   },
   "require": {
     "php": "^8",
-    "nikic/php-parser": "v5.0.0alpha1"
+    "nikic/php-parser": "v5.0.0alpha1",
+    "nesbot/carbon": "^2.62"
   }
 }
