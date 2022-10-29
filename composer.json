@@ -14,7 +14,7 @@
     }
   },
   "require": {
-    "phpunit/phpunit": "^9.5",
-    "nikic/php-parser": "^4.15"
+    "php": "^8",
+    "nikic/php-parser": "v5.0.0alpha1"
   }
 }
