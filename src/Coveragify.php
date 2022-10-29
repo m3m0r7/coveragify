@@ -9,17 +9,19 @@ use PhpParser\PrettyPrinter\Standard;
 
 class Coveragify
 {
-    const COVERAGE_COLLECTOR_CODE = <<< CODE
+    public const VERSION = '0.0.1';
+
+    public const COVERAGE_COLLECTOR_CODE = <<< CODE
     <?php
     \$__coverage_{{identifier}}->enter({{line}});
     CODE;
 
-    const COVERAGE_STEP_DEFINITION_CODE = <<< CODE
+    public const COVERAGE_STEP_DEFINITION_CODE = <<< CODE
     <?php
     \$__coverage_{{identifier}} = \Coveragify\Metrics::create(__FILE__, __METHOD__ ?? __FUNCTION__, {{coverTargets}});
     CODE;
 
-    const COVERAGE_POST_METRICS_CODE = <<< CODE
+    public const COVERAGE_POST_METRICS_CODE = <<< CODE
     <?php
     \Coveragify\Metrics::aggregate(\$__coverage_{{identifier}});
     CODE;
@@ -58,12 +60,12 @@ class Coveragify
         $this->coveragePostMetricsCode = $this->parse(static::COVERAGE_POST_METRICS_CODE);
     }
 
-    public function injectIncluding(): void
+    public static function injectIncluding(): void
     {
 
     }
 
-    public function ejectIncluding(): void
+    public static function ejectIncluding(): void
     {
 
     }

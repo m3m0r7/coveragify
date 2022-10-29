@@ -6,11 +6,11 @@
   "autoload": {
     "psr-4": {
       "Coveragify\\": "src/"
-    },
-    "autoload-dev": {
-      "psr-4": {
-        "Tests\\": "tests/"
-      }
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Tests\\": "tests/"
     }
   },
   "require": {

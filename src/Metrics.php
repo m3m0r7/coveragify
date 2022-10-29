@@ -52,6 +52,26 @@ class Metrics
 
     public static function aggregate(Metrics $metrics): void
     {
-        var_dump($metrics->getCovered());
+        $coverages = [];
+
+        foreach ($metrics->getCovered() as $line => $attributes) {
+            $coverages[$line] = $attributes['encountered'];
+        }
+
+        foreach ($metrics->getCoveredTargets() as [$line, $stmt, $complexity]) {
+            if (!isset($coverages[$line])) {
+                $coverages[$line] = -1;
+            }
+        }
+
+        natsort($coverages);
+        static::$aggregated[$metrics->getFile()] = $coverages;
+
+        var_dump(static::$aggregated);
+    }
+
+    public static function getAggregations(): array
+    {
+        return static::$aggregated;
     }
 }

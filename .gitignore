@@ -3,3 +3,5 @@ vendor
 composer.lock
 test*.php
 coverage.xml
+docker
+.phpunit.cache
