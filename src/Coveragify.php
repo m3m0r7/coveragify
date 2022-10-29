@@ -11,25 +11,17 @@ class Coveragify
 {
     const COVERAGE_COLLECTOR_CODE = <<< CODE
     <?php
-    \$__coverage_collector_{{identifier}}[__LINE__] = [__LINE__, __METHOD__, __CLASS__, {{nodeType}}];
+    \$__coverage_{{identifier}}->cover(__LINE__, {{nodeType}});
     CODE;
 
     const COVERAGE_STEP_DEFINITION_CODE = <<< CODE
     <?php
-    \$__coverage_step_definition_{{identifier}} = {{max_steps}};
+    \$__coverage_{{identifier}} = \Coveragify\Metrics::create(__FILE__, __METHOD__ ?? __FUNCTION__, {{max_steps}});
     CODE;
 
     const COVERAGE_POST_METRICS_CODE = <<< CODE
     <?php
-    \Coveragify\Metrics::post(
-        '{{identifier}}',
-        __LINE__,
-        __FILE__, 
-        __METHOD__,
-        __CLASS__,
-        \$__coverage_step_definition_{{identifier}},
-        \$__coverage_collector_{{identifier}},
-    );
+    \Coveragify\Metrics::aggregate(\$__coverage_{{identifier}});
     CODE;
 
     protected Node|array|null $coverageCollectorCode = null;
@@ -66,7 +58,9 @@ class Coveragify
         $this->coveragePostMetricsCode = $this->parse(static::COVERAGE_POST_METRICS_CODE);
     }
 
-    public function process(Node|array|null $node, int &$steps = 0): Node|array|null
+
+
+    protected function process(Node|array|null $node, int &$steps = 0): Node|array|null
     {
         if ($node === null) {
             return null;
@@ -79,80 +73,51 @@ class Coveragify
             return $stmts;
         }
 
-        switch (get_class($node)) {
+        switch ($nodeTypeClass = get_class($node)) {
             case Node\Stmt\Namespace_::class:
             case Node\Stmt\Class_::class:
                 $node->stmts = $this->process($node->stmts);
                 return $node;
             case Node\Stmt\ClassMethod::class:
             case Node\Stmt\Function_::class:
+            case Node\Stmt\If_::class:
+            case Node\Stmt\For_::class:
+            case Node\Stmt\Foreach_::class:
+            case Node\Stmt\While_::class:
+            case Node\Stmt\Do_::class:
+            case Node\Stmt\ElseIf_::class:
+            case Node\Stmt\Else_::class:
+            case Node\Stmt\TryCatch::class:
+            case Node\Stmt\Finally_::class:
                 $stmts = [];
                 foreach ($node->stmts as $index => $stmt) {
-
                     $coverageCollectorCode = $this->parse(static::COVERAGE_COLLECTOR_CODE, [
                         '{{nodeType}}' => get_class($stmt) . "::class",
                     ]);
-
                     $coverageCollectorCode ??= is_array($this->coverageCollectorCode) ? $coverageCollectorCode : [$coverageCollectorCode];
-
-                    switch (get_class($stmt)) {
-                        case Node\Stmt\If_::class:
-                        case Node\Stmt\For_::class:
-                        case Node\Stmt\Foreach_::class:
-                        case Node\Stmt\While_::class:
-                        case Node\Stmt\Do_::class:
-                        case Node\Stmt\ElseIf_::class:
-                        case Node\Stmt\Else_::class:
-                        case Node\Stmt\Function_::class:
-                        case Node\Stmt\TryCatch::class:
-                        case Node\Stmt\Finally_::class:
-                            $process = $this->process($stmt->stmts, $steps);
-                            $stmt->stmts = [
-                                ...$coverageCollectorCode,
-                                ...(is_array($process) ? $process : [$process]),
-                            ];
-                            $steps++;
-                            break;
-                        case Node\Stmt\Switch_::class:
-                            $caseCoverageCollectorCode = $this->parse(static::COVERAGE_COLLECTOR_CODE, [
-                                '{{nodeType}}' => Node\Stmt\Case_::class . "::class",
-                            ]);
-                            foreach ($stmt->cases as &$case) {
-                                $process = $this->process($case->stmts, $steps);
-                                $case->stmts = [
-                                    ...$caseCoverageCollectorCode,
-                                    ...(is_array($process) ? $process : [$process]),
-                                ];
-                                $steps++;
-                            }
-                            break;
-                        case Node\Expr\Match_::class:
-                            break;
-                    }
-
-                    $stmts = [
-                        ...$stmts,
-                        $stmt,
-                        ...$coverageCollectorCode,
-                    ];
+                    
                     $steps++;
+                    $stmts = [...$stmts, $this->process($stmt, $steps), ...$coverageCollectorCode];
                 }
 
-                $coverageStepDefinitionCode = $this->parse(static::COVERAGE_STEP_DEFINITION_CODE, [
-                    '{{max_steps}}' => $steps,
-                ]);
+                if ($nodeTypeClass === Node\Stmt\ClassMethod::class || $nodeTypeClass === Node\Stmt\Function_::class) {
+                    $coverageStepDefinitionCode = $this->parse(static::COVERAGE_STEP_DEFINITION_CODE, [
+                        '{{max_steps}}' => $steps,
+                    ]);
 
-                $node->stmts = [
-                    new Node\Stmt\TryCatch(
-                        [
-                            ...(is_array($coverageStepDefinitionCode) ? $coverageStepDefinitionCode : [$coverageStepDefinitionCode]),
-                            ...$stmts
-                        ],
-                        [],
-                        new Node\Stmt\Finally_($this->coveragePostMetricsCode),
-                    ),
-                ];
+                    $stmts = [
+                        new Node\Stmt\TryCatch(
+                            [
+                                ...(is_array($coverageStepDefinitionCode) ? $coverageStepDefinitionCode : [$coverageStepDefinitionCode]),
+                                ...$stmts
+                            ],
+                            [],
+                            new Node\Stmt\Finally_($this->coveragePostMetricsCode),
+                        ),
+                    ];
+                }
 
+                $node->stmts = $stmts;
                 return $node;
         }
 
