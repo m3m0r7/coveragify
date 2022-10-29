@@ -25,7 +25,7 @@ And run a command which is patching for a part of PHPUnit files:
 ./vendor/bin/coveragify patch
 ```
 
-If you need to rollback to previously states then running below command.
+If you need to rollback to previously states then running below command:
 
 ```sh
 ./vendor/bin/coveragify unpatch
