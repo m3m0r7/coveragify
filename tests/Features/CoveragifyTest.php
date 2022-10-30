@@ -9,8 +9,8 @@ class CoveragifyTest extends TestCase
 {
     public function testCollectingPattern1(): void
     {
-        $inspector = \Coveragify\Coveragify::inspect(__DIR__ . '/Templates/Template1.php');
-        eval($inspector->getCoverageableCode());
+        $inspector = \Coveragify\Coveragify::inspectFile(__DIR__ . '/Templates/Template1.php');
+        eval($inspector->getCoveragifyableCode());
 
         var_dump((new \Test())->outputHelloWorld([]));
     }

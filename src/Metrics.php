@@ -66,7 +66,10 @@ class Metrics
 
 
         ksort($coverages);
-        static::$aggregated[$metrics->getFile()] = $coverages;
+        static::$aggregated[$metrics->getFile()] = [
+            ...(static::$aggregated[$metrics->getFile()] ?? []),
+            ...$coverages,
+        ];
     }
 
     public static function getAggregations(): array

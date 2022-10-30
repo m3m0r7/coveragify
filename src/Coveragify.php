@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Coveragify;
 
+use Coveragify\Stream\Processor;
 use PhpParser\Node;
 use PhpParser\ParserFactory;
 use PhpParser\PrettyPrinter\Standard;
@@ -29,11 +30,20 @@ class Coveragify
     protected Node|array|null $coverageCollectorCode = null;
     protected Node|array|null $coveragePostMetricsCode = null;
 
-    public static function inspect(string $file, string $identifier = null): Inspector
+    public static function inspectFile(string $file, string $identifier = null): Inspector
+    {
+        return static::inspect(
+            file_get_contents($file),
+            $identifier,
+            $file
+        );
+    }
+
+    public static function inspect(string $code, string $identifier = null, string $file = null): Inspector
     {
         $identifier ??= static::generateIdentifier();
         $coveragify = new static($identifier, $file);
-        return new Inspector($coveragify->process($coveragify->parse(file_get_contents($file))));
+        return new Inspector($coveragify->process($coveragify->parse($code)));
     }
 
     protected function parse(string $code, array $variables = []): Node|array|null
@@ -55,19 +65,18 @@ class Coveragify
         return md5(random_bytes(32));
     }
 
-    protected function __construct(protected string $identifier, protected string $file)
+    protected function __construct(protected string $identifier, protected ?string $file = null)
     {
         $this->coveragePostMetricsCode = $this->parse(static::COVERAGE_POST_METRICS_CODE);
     }
 
     public static function injectIncluding(): void
     {
-
+        stream_filter_register('coveragifyable', Coveragifyable::class);
     }
 
     public static function ejectIncluding(): void
     {
-
     }
 
     protected function process(Node|array|null $node, int $complexity = 0, array &$coverTargets = []): Node|array|null

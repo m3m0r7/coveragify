@@ -18,13 +18,13 @@ class Inspector
         return $this->node;
     }
 
-    public function getCoverageableCode(): string
+    public function getCoveragifyableCode(): string
     {
-        return preg_replace(
-            "/\A\<\?php\n\n/",
+        return ltrim(preg_replace(
+            "/\A\<\?php/",
             '',
             (new Standard())
                 ->prettyPrint($this->node)
-        );
+        ));
     }
 }
