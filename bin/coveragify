@@ -50,6 +50,40 @@ if ($param === 'patch') {
     $argv = $_SERVER['argv'] = $GLOBALS['argv'] = array_slice($argv, 2);
     $argc = $_SERVER['argc'] = $GLOBALS['argc'] = count($argv);
 
+    // Find loaded composer
+    $composerAutoloaderInitClass = array_values(
+        array_filter(
+            get_declared_classes(),
+            static fn (string $name) => preg_match('/^ComposerAutoloaderInit/', $name)
+        )
+    )[0] ?? null;
+
+    $composerStaticInitClass = array_values(
+        array_filter(
+            get_declared_classes(),
+            static fn (string $name) => preg_match('/^Composer\\\\Autoload\\\\ComposerStaticInit/', $name)
+        )
+    )[0] ?? null;
+
+    if ($composerAutoloaderInitClass === null) {
+        echo "The composer autoloader init class is not found\n";
+        exit(1);
+    }
+
+    if ($composerStaticInitClass === null) {
+        echo "The composer static init class is not found\n";
+        exit(1);
+    }
+
+    // Load renewed ClassLoader
+    $loader = new \Coveragify\ClassLoader(\dirname($vendorPath));
+    $loader->register(true);
+    call_user_func($composerStaticInitClass::getInitializer($loader));
+
+    // Remove default composer class loader
+    spl_autoload_unregister([$composerAutoloaderInitClass::getLoader(), 'loadClass']);
+
+
     // Run via coveragify
     include $file;
 }
