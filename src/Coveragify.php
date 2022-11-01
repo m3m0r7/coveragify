@@ -123,16 +123,28 @@ class Coveragify
                         '{{coverTargets}}' => json_encode($coverTargets),
                     ]);
 
+                    /**
+                     * @var Node\Stmt[] $coverageCollectorCode
+                     */
+                    $coverageStepDefinitionCode ??= (is_array($coverageStepDefinitionCode) ? $coverageStepDefinitionCode : [$coverageStepDefinitionCode]);
+
+                    foreach ($coverageStepDefinitionCode as $code) {
+                        $code->setAttribute('lineBreak', false);
+                    }
+
                     $stmts = [
-                        new Node\Stmt\TryCatch(
+                        $statement = new Node\Stmt\TryCatch(
                             [
-                                ...(is_array($coverageStepDefinitionCode) ? $coverageStepDefinitionCode : [$coverageStepDefinitionCode]),
+                                ...$coverageStepDefinitionCode,
                                 ...$stmts
                             ],
                             [],
-                            new Node\Stmt\Finally_($this->coveragePostMetricsCode),
+                            $finally = new Node\Stmt\Finally_($this->coveragePostMetricsCode),
                         ),
                     ];
+
+                    $statement->setAttribute('lineBreak', false);
+                    $finally->setAttribute('lineBreak', false);
                 }
 
                 $node->stmts = $stmts;
@@ -145,12 +157,29 @@ class Coveragify
                 return $node;
             case Node\Stmt\Break_::class:
                 return $node;
+            case Node\Stmt\Return_::class:
+                $node = new Node\Stmt\TryCatch(
+                    is_array($node) ? $node : [$node],
+                    [],
+                    $finally = new Node\Stmt\Finally_($this->coveragePostMetricsCode),
+                );
+                $node->setAttribute('lineBreak', false);
+                $finally->setAttribute('lineBreak', false);
+                return $node;
             default:
                 $coverTargets[] = [$node->getStartLine(), get_class($node), $complexity];
                 $coverageCollectorCode = $this->parse(static::COVERAGE_COLLECTOR_CODE, [
                     '{{line}}' => $node->getStartLine(),
                 ]);
+
+                /**
+                 * @var Node\Stmt[] $coverageCollectorCode
+                 */
                 $coverageCollectorCode ??= is_array($this->coverageCollectorCode) ? $coverageCollectorCode : [$coverageCollectorCode];
+
+                foreach ($coverageCollectorCode as $code) {
+                    $code->setAttribute('lineBreak', false);
+                }
 
                 if (is_array($node)) {
                     return [...$node, ...$coverageCollectorCode];

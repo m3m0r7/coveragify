@@ -23,7 +23,7 @@ class Inspector
         return ltrim(preg_replace(
             "/\A\<\?php/",
             '',
-            (new Standard())
+            (new CoveragifyPrinter())
                 ->prettyPrint($this->node)
         ));
     }
