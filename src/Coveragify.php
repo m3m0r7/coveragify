@@ -69,16 +69,7 @@ class Coveragify
         $this->coveragePostMetricsCode = $this->parse(static::COVERAGE_POST_METRICS_CODE);
     }
 
-    public static function injectIncluding(): void
-    {
-        stream_filter_register('coveragifyable', Coveragifyable::class);
-    }
-
-    public static function ejectIncluding(): void
-    {
-    }
-
-    protected function process(Node|array|null $node, int $complexity = 0, array &$coverTargets = []): Node|array|null
+    protected function process(Node|array|null $node, int $complexity = 0, bool $enteredInClass = false, array &$coverTargets = []): Node|array|null
     {
         if ($node === null) {
             return null;
@@ -86,7 +77,7 @@ class Coveragify
         if (is_array($node)) {
             $stmts = [];
             foreach ($node as $oneOfNode) {
-                $process = $this->process($oneOfNode, $complexity, $coverTargets);
+                $process = $this->process($oneOfNode, $complexity, $enteredInClass, $coverTargets);
                 $stmts = [...$stmts, ...(is_array($process) ? $process : [$process])];
             }
             return $stmts;
@@ -95,7 +86,14 @@ class Coveragify
         switch ($nodeTypeClass = get_class($node)) {
             case Node\Stmt\Namespace_::class:
             case Node\Stmt\Class_::class:
-                $node->stmts = $this->process($node->stmts, $complexity, $coverTargets);
+                $node->stmts = $this->process(
+                    $node->stmts,
+                    $complexity,
+                    $nodeTypeClass === Node\Stmt\Class_::class
+                        ? true
+                        : $enteredInClass,
+                    $coverTargets
+                );
                 return $node;
             case Node\Stmt\ClassMethod::class:
             case Node\Stmt\Function_::class:
@@ -112,7 +110,7 @@ class Coveragify
                 foreach ($node->stmts as $stmt) {
                     $coverTargets[] = [$stmt->getStartLine(), get_class($stmt), $complexity];
 
-                    $process = $this->process($stmt, $complexity + 1, $coverTargets);
+                    $process = $this->process($stmt, $complexity + 1, $enteredInClass, $coverTargets);
                     $process = is_array($process) ? $process : [$process];
                     $stmts = [...$stmts, ...$process];
                 }
@@ -150,22 +148,29 @@ class Coveragify
                 return $node;
             case Node\Stmt\Switch_::class:
                 foreach ($node->cases as &$case) {
-                    $case->stmts = $this->process($case->stmts, $complexity + 1, $coverTargets);
+                    $case->stmts = $this->process($case->stmts, $complexity + 1, $enteredInClass, $coverTargets);
                 }
 
                 return $node;
+            case Node\Stmt\Return_::class:
+//                $node = new Node\Stmt\TryCatch(
+//                    is_array($node) ? $node : [$node],
+//                    [],
+//                    $finally = new Node\Stmt\Finally_($this->coveragePostMetricsCode),
+//                );
+//                $node->setAttribute('lineBreak', false);
+//                $finally->setAttribute('lineBreak', false);
+//                return $node;
+            case Node\Stmt\Static_::class:
+            case Node\Stmt\Property::class:
+            case Node\Stmt\Declare_::class:
+            case Node\Stmt\Use_::class:
             case Node\Stmt\Break_::class:
                 return $node;
-            case Node\Stmt\Return_::class:
-                $node = new Node\Stmt\TryCatch(
-                    is_array($node) ? $node : [$node],
-                    [],
-                    $finally = new Node\Stmt\Finally_($this->coveragePostMetricsCode),
-                );
-                $node->setAttribute('lineBreak', false);
-                $finally->setAttribute('lineBreak', false);
-                return $node;
             default:
+                if (!$enteredInClass) {
+                    return $node;
+                }
                 $coverTargets[] = [$node->getStartLine(), get_class($node), $complexity];
                 $coverageCollectorCode = $this->parse(static::COVERAGE_COLLECTOR_CODE, [
                     '{{line}}' => $node->getStartLine(),
