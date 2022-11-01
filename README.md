@@ -30,3 +30,11 @@ If you need to rollback to previously states then running below command:
 ```sh
 ./vendor/bin/coveragify unpatch
 ```
+
+# Run your tests
+
+You should run via coveragify executor as following:
+
+```
+./vendor/bin/coveragify run ./vendor/bin/phpunit /path/to/your_testing_directory_or_file
+```

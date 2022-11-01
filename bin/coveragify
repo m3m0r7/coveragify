@@ -1,8 +1,16 @@
 #!/usr/bin/env php
 <?php
 
-require_once 'vendor/autoload.php';
-$relativePath = 'vendor/phpunit/phpunit/src/TextUI/TestRunner.php';
+$vendorPath = 'vendor';
+if (!is_dir($vendorPath)) {
+    $vendorPath = "../{$vendorPath}";
+    if (!is_dir($vendorPath)) {
+        $vendorPath = "../../{$vendorPath}";
+    }
+}
+
+require_once "{$vendorPath}/autoload.php";
+$relativePath = "{$vendorPath}/phpunit/phpunit/src/TextUI/TestRunner.php";
 
 $param = $argv[1] ?? null;
 
@@ -30,6 +38,20 @@ if ($param === 'patch') {
 
     echo "Successfully unpatch\n";
     exit(0);
+} elseif ($param === 'run') {
+    $file = $argv[2] ?? null;
+
+    if ($file === null || !is_file($file)) {
+        echo "Specified file {$file} is not found.\n";
+        exit(1);
+    }
+
+    // Update global variables
+    $argv = $_SERVER['argv'] = $GLOBALS['argv'] = array_slice($argv, 2);
+    $argc = $_SERVER['argc'] = $GLOBALS['argc'] = count($argv);
+
+    // Run via coveragify
+    include $file;
 }
 
 echo "Unknown specified argument\n";

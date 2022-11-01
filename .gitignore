@@ -5,3 +5,4 @@ test*.php
 coverage.xml
 docker
 .phpunit.cache
+.temp

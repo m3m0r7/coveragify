@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace Coveragify;
 
-use Coveragify\Stream\Processor;
 use PhpParser\Node;
 use PhpParser\ParserFactory;
 use PhpParser\PrettyPrinter\Standard;
