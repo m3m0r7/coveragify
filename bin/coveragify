@@ -77,13 +77,14 @@ if ($param === 'patch') {
 
     // Load renewed ClassLoader
     $loader = new \Coveragify\ClassLoader(\dirname($vendorPath));
-    $loader::setComposerConfigurations($composerAutoloaderInitClass, $composerStaticInitClass);
+    $loader::setConfigurations(getcwd(), [
+        getcwd() . '/vendor',
+    ]);
     $loader->register(true);
     call_user_func($composerStaticInitClass::getInitializer($loader));
 
     // Remove default composer class loader
     spl_autoload_unregister([$composerAutoloaderInitClass::getLoader(), 'loadClass']);
-
 
     // Run via coveragify
     include $file;

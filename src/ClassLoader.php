@@ -7,25 +7,22 @@ use function Composer\Autoload\includeFile;
 
 class ClassLoader extends \Composer\Autoload\ClassLoader
 {
-    protected static string $composerAutoloaderInit;
-    protected static string $composerStaticInit;
+    protected static string $currentDirectory;
+    protected static array $ignoreDirectories = [];
 
-    public static function setComposerConfigurations(string $composerAutoloaderInit, string $composerStaticInit)
+    public static function setConfigurations(string $currentDirectory, array $ignoreDirectories)
     {
-        static::$composerAutoloaderInit = $composerAutoloaderInit;
-        static::$composerStaticInit = $composerStaticInit;
+        static::$currentDirectory = $currentDirectory;
+        static::$ignoreDirectories = $ignoreDirectories;
     }
 
     public function loadClass($class)
     {
-        $directoryPaths = [
-            ...array_keys((static::$composerStaticInit)::$classMap),
-            ...array_keys((static::$composerStaticInit)::$prefixDirsPsr4),
-        ];
-
-        foreach ($directoryPaths as $path) {
-            if (substr($class, 0, strlen($path)) === $path) {
-                return parent::loadClass($class);
+        foreach (static::$ignoreDirectories as $ignoreDirectory) {
+            $ignoreDirectory = realpath($ignoreDirectory);
+            if (str_starts_with($ignoreDirectory, static::$currentDirectory)) {
+                parent::loadClass($class);
+                return true;
             }
         }
 
