@@ -77,9 +77,7 @@ if ($param === 'patch') {
 
     // Load renewed ClassLoader
     $loader = new \Coveragify\ClassLoader(\dirname($vendorPath));
-    $loader::setConfigurations(getcwd(), [
-        getcwd() . '/vendor',
-    ]);
+    $loader::setConfigurations(getcwd());
     $loader->register(true);
     call_user_func($composerStaticInitClass::getInitializer($loader));
 

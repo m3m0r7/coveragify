@@ -1,0 +1,8 @@
+{
+  "applyDirectories": [
+    "src"
+  ],
+  "ignoreDirectories": [
+    "vendor"
+  ]
+}
